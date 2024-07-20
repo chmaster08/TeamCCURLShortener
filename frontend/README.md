@@ -16,8 +16,10 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-./frontend/src/app/以下に各ページに対応するtsxファイルがあります。
+./frontend/src/app/ : 各ページに対応するtsxファイル(基本 featuresのメインコンポーネントを置くだけのはず)
 
-./frontend/src/components/以下で必要なパーツを作成するイメージです。
+./frontend/src/features/ : 各ページの実装
 
-./frontend/src/libs/以下でロジック実装のイメージですがやりたいように適当に変えてください。
+./frontend/src/hooks/ : hooks
+
+./frontend/src/libs/ : 以下で共通ロジック
