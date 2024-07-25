@@ -1,7 +1,8 @@
 "use client";
 
 import { createShortenedUrl, ShortenedUrl, urls } from "@/app/Main/mock";
-import React, { useState } from "react";
+import { useState } from "react";
+import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 
 export default function Main() {
   const [urls, setUrls] = useState<ShortenedUrl>({
@@ -11,13 +12,18 @@ export default function Main() {
 
   const [isSuccess, setIsSuccess] = useState(false);
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleCreateUrl = async () => {
     console.log("handleCreateUrl", urls);
     try {
+      setIsLoading(true);
       await createShortenedUrl(urls);
+      setIsLoading(false);
       setIsSuccess(true);
     } catch (error) {
       console.error(error);
+      setIsLoading(false);
     }
   };
 
@@ -29,7 +35,13 @@ export default function Main() {
   return (
     <div className="max-w-4xl mx-auto mt-8">
       <h2 className="text-3xl font-bold">URL短縮</h2>
-      <div className="max-w-md">
+      <form
+        className="max-w-md"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          await handleCreateUrl();
+        }}
+      >
         <div className="mt-8 w-full">
           <div>短縮元URL</div>
           <input
@@ -55,15 +67,17 @@ export default function Main() {
             />
           </div>
         </div>
-      </div>
+        {/* inputが複数のときにEnterキーで送信する用 */}
+        <input type="submit" className="hidden" />
+      </form>
 
       {!isSuccess ? (
         <button
           type="button"
-          className="text-white bg-blue-500 py-2 px-4 mt-4 rounded-lg"
+          className="text-white bg-blue-500 w-32 py-2 px-4 mt-4 rounded-lg"
           onClick={handleCreateUrl}
         >
-          生成する
+          {isLoading ? <HourglassEmptyIcon /> : "生成する"}
         </button>
       ) : (
         <button
