@@ -1,9 +1,16 @@
-import { Typography } from "@mui/material";
+"use client";
 
-export default function Management() {
+import { Box, Container } from "@mui/material";
+import Links from "../../features/management/Links";
+
+
+export default function ManagementPage() {
   return (
-    <>
-      <Typography variant="h1">Management</Typography>
-    </>
+    <Box mt={4}>
+      <Container>
+        <Links />
+      </Container>
+    </Box>
   );
 }
+
