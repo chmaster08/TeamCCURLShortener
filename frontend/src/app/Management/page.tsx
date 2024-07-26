@@ -1,5 +1,3 @@
-"use client";
-
 import { Box, Container } from "@mui/material";
 import Links from "../../features/management/Links";
 

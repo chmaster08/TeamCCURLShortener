@@ -1,11 +1,21 @@
 "use client";
 
-import { createShortenedUrl, ShortenedUrl, urls } from "@/app/Main/mock";
 import { useState } from "react";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
+import { createUrl } from "@/libs/urls";
+import { createClient } from "@/utils/supabase/client";
+
+// TODO: unify field name
+export type ShortenedUrl = {
+  name: string;
+  original: string;
+  shortened: string;
+};
 
 export default function Main() {
+  const supabase = createClient();
   const [urls, setUrls] = useState<ShortenedUrl>({
+    name: "",
     original: "",
     shortened: "",
   });
@@ -18,7 +28,7 @@ export default function Main() {
     console.log("handleCreateUrl", urls);
     try {
       setIsLoading(true);
-      await createShortenedUrl(urls);
+      await createUrl(supabase, urls.name, urls.original, urls.shortened);
       setIsLoading(false);
       setIsSuccess(true);
     } catch (error) {
@@ -28,7 +38,7 @@ export default function Main() {
   };
 
   const handleReset = () => {
-    setUrls({ original: "", shortened: "" });
+    setUrls({ name: "", original: "", shortened: "" });
     setIsSuccess(false);
   };
 
@@ -42,6 +52,18 @@ export default function Main() {
           await handleCreateUrl();
         }}
       >
+        {/* TODO: Handle empty string */}
+        <div className="mt-8 w-full">
+          <div>名前</div>
+          <input
+            className="mt-1 w-full p-2 rounded border border-gray-300"
+            placeholder="Team CCの議事録"
+            value={urls.name}
+            onChange={(e) => {
+              setUrls({ ...urls, name: e.target.value });
+            }}
+          />
+        </div>
         <div className="mt-8 w-full">
           <div>短縮元URL</div>
           <input

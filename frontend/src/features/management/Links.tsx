@@ -1,18 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Avatar,
   Box,
-  Button,
-  Card,
-  Dialog,
-  DialogActions,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  TextField,
-  InputAdornment,
   IconButton,
   Link,
   Paper,
@@ -26,60 +17,17 @@ import QrCodeIcon from "@mui/icons-material/QrCode";
 import EditDialog from "./EditDialog";
 import DeleteDialog from "./DeleteDialog";
 import Alerts from "./Alerts";
-
-export interface LinkData {
-  id: number;
-  name: string;
-  url: string;
-  shortUrl: string;
-}
-
-const fetchLinksData = async (): Promise<LinkData[]> => {
-  return [
-    {
-      id: 1,
-      name: "TeamCC URLShortener",
-      url: "https://github.com/chmaster08/TeamCCURLShortener",
-      shortUrl: "teamcc.com/ab123",
-    },
-    {
-      id: 2,
-      name: "TeamAA URLShortener",
-      url: "https://github.com/chmaster08/TeamCCURLShortener",
-      shortUrl: "teamcc.com/ab123",
-    },
-    {
-      id: 3,
-      name: "TeamBB URLShortener",
-      url: "https://github.com/chmaster08/TeamCCURLShortener",
-      shortUrl: "teamcc.com/ab123",
-    },
-    {
-      id: 4,
-      name: "TeamA URLShortener",
-      url: "https://github.com/chmaster08/TeamCCURLShortener",
-      shortUrl: "teamcc.com/ab123",
-    },
-    {
-      id: 5,
-      name: "TeamB URLShortener",
-      url: "https://github.com/chmaster08/TeamCCURLShortener",
-      shortUrl: "teamcc.com/ab123",
-    },
-    {
-      id: 6,
-      name: "TeamC URLShortener",
-      url: "https://github.com/chmaster08/TeamCCURLShortener",
-      shortUrl: "teamcc.com/ab123",
-    },
-  ];
-};
+import { deleteUrl, listUrls, updateUrl } from "@/libs/urls";
+import { createClient } from "@/utils/supabase/client";
+import Url from "@/libs/model/url";
 
 export default function Links() {
-  const [linksData, setLinksData] = useState<LinkData[]>([]);
+  const supabase = useMemo(() => createClient(), []);
+
+  const [linksData, setLinksData] = useState<Url[]>([]);
   const [openDeleteDialog, setOpenDeleteDialog] = useState<number | null>(null);
   const [openEditDialog, setOpenEditDialog] = useState<number | null>(null);
-  const [editingLink, setEditingLink] = useState<LinkData | null>(null);
+  // TODO: combine these two states into one
   const [editedName, setEditedName] = useState("");
   const [editedShortUrl, setEditedShortUrl] = useState("");
   const [deletedAlertOpen, setDeletedAlertOpen] = useState(false);
@@ -88,12 +36,14 @@ export default function Links() {
 
   useEffect(() => {
     const loadLinksData = async () => {
-      const data = await fetchLinksData();
-      setLinksData(data);
+      const data = await listUrls(supabase);
+      if (data) {
+        setLinksData(data);
+      }
     };
 
     loadLinksData();
-  }, []);
+  }, [supabase]);
 
   const handleDeleteDialogOpen = (id: number) => {
     setOpenDeleteDialog(id);
@@ -103,11 +53,13 @@ export default function Links() {
     setOpenDeleteDialog(null);
   };
 
-  const handleDelete = () => {
-    // TODO: DBからの削除処理
+  const handleDelete = async (id: number) => {
     setOpenDeleteDialog(null);
-    setDeletedAlertOpen(true);
-    setTimeout(() => setDeletedAlertOpen(false), 1500);
+    const isDeleted = await deleteUrl(supabase, id);
+    if (isDeleted) {
+      setDeletedAlertOpen(true);
+      setTimeout(() => setDeletedAlertOpen(false), 1500);
+    }
   };
 
   const handleCopyLink = (url: string) => {
@@ -123,22 +75,30 @@ export default function Links() {
       });
   };
 
-  const handleOpenEditDialog = (link: LinkData) => {
-    setEditingLink(link);
+  const handleOpenEditDialog = (link: Url) => {
     setEditedName(link.name);
-    setEditedShortUrl(link.shortUrl.split("/").pop() || "");
+    setEditedShortUrl(link.shortCode.split("/").pop() || "");
     setOpenEditDialog(link.id);
   };
 
   const handleEditDialogClose = () => {
     setOpenEditDialog(null);
-    setEditingLink(null);
   };
 
-  const handleEditSave = () => {
+  const handleEditSave = async (id: number) => {
     // TODO:DBの更新処理
-    setOpenEditDialog(null);
-    setEditingLink(null);
+    const url = await updateUrl(supabase, id, editedName, editedShortUrl);
+    if (url) {
+      setOpenEditDialog(null);
+      setLinksData(
+        linksData.map((link) => {
+          if (link.id === id) {
+            return url;
+          }
+          return link;
+        }),
+      );
+    }
   };
 
   if (linksData.length === 0) {
@@ -159,7 +119,7 @@ export default function Links() {
         <Box sx={{ position: "absolute", top: 8, right: 8 }}>
           <IconButton
             aria-label="copy"
-            onClick={() => handleCopyLink(link.url)}
+            onClick={() => handleCopyLink(link.original)}
           >
             <CopyIcon />
           </IconButton>
@@ -183,7 +143,7 @@ export default function Links() {
           <Stack direction="row" spacing={2}>
             <Avatar
               alt={link.name}
-              src={`http://www.google.com/s2/favicons?domain=${link.url}&size=100`}
+              src={`http://www.google.com/s2/favicons?domain=${link.original}&size=100`}
             />
             <Typography variant="h5" gutterBottom>
               {link.name}
@@ -191,26 +151,30 @@ export default function Links() {
           </Stack>
         </Box>
         <Box mt={4}>
-          <Link href={link.url} variant="h6" gutterBottom underline="hover">
-            {link.shortUrl}
+          <Link
+            href={link.original}
+            variant="h6"
+            gutterBottom
+            underline="hover"
+          >
+            {link.shortCode}
           </Link>
           <Box>
             <Link
-              href={link.url}
+              href={link.original}
               variant="body1"
               gutterBottom
               underline="hover"
               color="inherit"
             >
-              {link.url}
+              {link.original}
             </Link>
           </Box>
         </Box>
         <EditDialog
           openEditDialog={openEditDialog === link.id}
           handleEditDialogClose={handleEditDialogClose}
-          handleEditSave={handleEditSave}
-          link={editingLink}
+          handleEditSave={() => handleEditSave(link.id)}
           editedName={editedName}
           editedShortUrl={editedShortUrl}
           setEditedName={setEditedName}
@@ -219,7 +183,7 @@ export default function Links() {
         <DeleteDialog
           openDeleteDialog={openDeleteDialog === link.id}
           handleDeleteDialogClose={handleDeleteDialogClose}
-          handleDelete={handleDelete}
+          handleDelete={() => handleDelete(link.id)}
         />
         <Alerts
           copiedAlertOpen={copiedAlertOpen}
