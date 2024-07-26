@@ -1,6 +1,13 @@
 "use client";
 
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+} from "@mui/material";
 
 interface DialogsProps {
   openDeleteDialog: boolean;
@@ -8,7 +15,11 @@ interface DialogsProps {
   handleDelete: () => void;
 }
 
-export default function DeleteDialogs({ openDeleteDialog, handleDeleteDialogClose, handleDelete }: DialogsProps) {
+export default function DeleteDialogs({
+  openDeleteDialog,
+  handleDeleteDialogClose,
+  handleDelete,
+}: DialogsProps) {
   return (
     <Dialog
       open={openDeleteDialog}
