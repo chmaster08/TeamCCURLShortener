@@ -1,8 +1,5 @@
-"use client";
-
 import { Box, Container } from "@mui/material";
 import Links from "../../features/management/Links";
-
 
 export default function ManagementPage() {
   return (
@@ -13,4 +10,3 @@ export default function ManagementPage() {
     </Box>
   );
 }
-

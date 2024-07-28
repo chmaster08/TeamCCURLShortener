@@ -1,4 +1,4 @@
-export type URLItem ={
-    OriginalURL: string;
-    ShortenedURL: string;
-}
+export type URLItem = {
+  OriginalURL: string;
+  ShortenedURL: string;
+};
