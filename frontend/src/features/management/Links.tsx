@@ -20,6 +20,8 @@ import Alerts from "./Alerts";
 import { deleteUrl, listUrls, updateUrl } from "@/libs/urls";
 import { createClient } from "@/utils/supabase/client";
 import Url from "@/libs/model/url";
+import URLCard from "./components/urlCard";
+import URLCardList from "./components/urlList";
 
 export default function Links() {
   const supabase = useMemo(() => createClient(), []);
@@ -39,32 +41,58 @@ export default function Links() {
       const data = await listUrls(supabase);
       if (data) {
         setLinksData(data);
+      } else {
+        const dummyData: Url[] = [
+          {
+            id: 1,
+            name: "dummy",
+            original: "https://example.com",
+            shortCode: "https://example.com",
+            createdAt: "2021-10-10",
+          },
+          {
+            id: 2,
+            name: "dummy2",
+            original: "https://example2.com",
+            shortCode: "https://example2.com",
+            createdAt: "2021-10-11",
+          },
+          {
+            id: 3,
+            name: "dummy3",
+            original: "https://example3.com",
+            shortCode: "https://example3.com",
+            createdAt: "2021-10-12",
+          },
+        ];
+        setLinksData(dummyData);
       }
     };
 
     loadLinksData();
   }, [supabase]);
 
-  const handleDeleteDialogOpen = (id: number) => {
-    setOpenDeleteDialog(id);
+  const handleDeleteDialogOpen = (id: Url) => {
+    console.log(id);
+    setOpenDeleteDialog(id.id);
   };
 
   const handleDeleteDialogClose = () => {
     setOpenDeleteDialog(null);
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: Url) => {
     setOpenDeleteDialog(null);
-    const isDeleted = await deleteUrl(supabase, id);
+    const isDeleted = await deleteUrl(supabase, id.id);
     if (isDeleted) {
       setDeletedAlertOpen(true);
       setTimeout(() => setDeletedAlertOpen(false), 1500);
     }
   };
 
-  const handleCopyLink = (url: string) => {
+  const handleCopyLink = (url: Url) => {
     navigator.clipboard
-      .writeText(url)
+      .writeText(url.original)
       .then(() => {
         setCopiedAlertOpen(true);
         setTimeout(() => setCopiedAlertOpen(false), 1500);
@@ -101,96 +129,17 @@ export default function Links() {
     }
   };
 
-  if (linksData.length === 0) {
-    return (
-      <Paper elevation={3} sx={{ position: "relative", p: 9, mb: 4 }}>
-        <Box sx={{ position: "absolute", top: "30%", left: "40%" }}>
-          <Typography variant="h6">you do not have any links.</Typography>
-        </Box>
-      </Paper>
-    );
-  } else {
-    return linksData.map((link) => (
-      <Paper
-        key={link.id}
-        elevation={3}
-        sx={{ position: "relative", p: 9, mb: 4 }}
-      >
-        <Box sx={{ position: "absolute", top: 8, right: 8 }}>
-          <IconButton
-            aria-label="copy"
-            onClick={() => handleCopyLink(link.original)}
-          >
-            <CopyIcon />
-          </IconButton>
-          <IconButton
-            aria-label="edit"
-            onClick={() => handleOpenEditDialog(link)}
-          >
-            <EditIcon />
-          </IconButton>
-          <IconButton
-            aria-label="delete"
-            onClick={() => handleDeleteDialogOpen(link.id)}
-          >
-            <DeleteIcon />
-          </IconButton>
-          <IconButton aria-label="qr code">
-            <QrCodeIcon />
-          </IconButton>
-        </Box>
-        <Box sx={{ position: "absolute", top: 27, left: 20 }}>
-          <Stack direction="row" spacing={2}>
-            <Avatar
-              alt={link.name}
-              src={`http://www.google.com/s2/favicons?domain=${link.original}&size=100`}
-            />
-            <Typography variant="h5" gutterBottom>
-              {link.name}
-            </Typography>
-          </Stack>
-        </Box>
-        <Box mt={4}>
-          <Link
-            href={link.original}
-            variant="h6"
-            gutterBottom
-            underline="hover"
-          >
-            {link.shortCode}
-          </Link>
-          <Box>
-            <Link
-              href={link.original}
-              variant="body1"
-              gutterBottom
-              underline="hover"
-              color="inherit"
-            >
-              {link.original}
-            </Link>
-          </Box>
-        </Box>
-        <EditDialog
-          openEditDialog={openEditDialog === link.id}
-          handleEditDialogClose={handleEditDialogClose}
-          handleEditSave={() => handleEditSave(link.id)}
-          editedName={editedName}
-          editedShortUrl={editedShortUrl}
-          setEditedName={setEditedName}
-          setEditedShortUrl={setEditedShortUrl}
-        />
-        <DeleteDialog
-          openDeleteDialog={openDeleteDialog === link.id}
-          handleDeleteDialogClose={handleDeleteDialogClose}
-          handleDelete={() => handleDelete(link.id)}
-        />
-        <Alerts
-          copiedAlertOpen={copiedAlertOpen}
-          deletedAlertOpen={deletedAlertOpen}
-          failedAlert={failedAlert}
-        />
-      </Paper>
-    ));
-  }
+  return (
+    <Box
+      sx={{
+        m: 2,
+        display: "flex",
+        flexDirection: { xs: "column", md: "row" },
+        width: "100%",
+      }}
+      gap={3}
+    >
+      <URLCardList urls={linksData} onSelect={() => {}} />
+    </Box>
+  );
 }
