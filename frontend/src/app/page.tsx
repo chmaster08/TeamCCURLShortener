@@ -1,9 +1,4 @@
 "use client";
-import Drawer from "@/components/Drawer";
-import Footer from "@/components/Footer";
-import Header from "@/components/Header";
-import { Draw } from "@mui/icons-material";
-import { useState } from "react";
 
 export default function Home() {
   return (
