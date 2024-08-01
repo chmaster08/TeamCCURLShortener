@@ -4,6 +4,7 @@ import { useState } from "react";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import { createUrl } from "@/libs/urls";
 import { createClient } from "@/utils/supabase/client";
+import { suggestUrl } from "@/libs/chatGpt";
 
 // TODO: unify field name
 export type ShortenedUrl = {
@@ -28,7 +29,9 @@ export default function Main() {
     console.log("handleCreateUrl", urls);
     try {
       setIsLoading(true);
-      await createUrl(supabase, urls.name, urls.original, urls.shortened);
+      // TODO: 被った場合の処理
+      const shortenedUrl = await suggestUrl(urls.original);
+      await createUrl(supabase, urls.name, urls.original, shortenedUrl);
       setIsLoading(false);
       setIsSuccess(true);
     } catch (error) {
