@@ -24,10 +24,10 @@ export async function suggestUrl(url: string): Promise<string> {
   const content = `${url}
 このurlの内容から、短縮urlを考えて下さい
 - urlのサイトに書かれている内容も必ず踏まえて下さい
-- ccから初めて下さい
-例:cc/example
+- tcc.0t0.jpから初めて下さい
+例:tcc.0t0.jp/example
 - 分かりやすいurlにしてください
-- 考えたurlのみを返して下さい`;
+- 考えたurlを返して下さい`;
   const res = await fetch(endpoint, {
     method: "POST",
     headers: {
