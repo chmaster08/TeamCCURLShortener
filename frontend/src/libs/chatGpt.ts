@@ -28,7 +28,6 @@ export async function suggestUrl(url: string): Promise<string> {
 例:cc/example
 - 分かりやすいurlにしてください
 - 考えたurlのみを返して下さい`;
-  console.log(process.env.NEXT_PUBLIC_CHAT_GPT_API_KEY);
   const res = await fetch(endpoint, {
     method: "POST",
     headers: {
