@@ -27,7 +27,44 @@ export async function suggestUrl(url: string): Promise<string> {
 - tcc.0t0.jpから初めて下さい
 例:tcc.0t0.jp/example
 - 分かりやすいurlにしてください
-- 考えたurlを返して下さい`;
+- 必ず, 考えたurlだけを返して下さい`;
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.NEXT_PUBLIC_CHAT_GPT_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: "You are a helpful assistant.",
+        },
+        {
+          role: "user",
+          content,
+        },
+      ],
+    }),
+  });
+  const jsonRes = (await res.json()) as Response;
+  return jsonRes.choices[0].message.content;
+}
+
+export async function suggestOtherUrl(
+  url: string,
+  existingUrls: string[],
+): Promise<string> {
+  const endpoint = "https://api.openai.com/v1/chat/completions";
+  const content = `${url}
+このurlの内容から、短縮urlを考えて下さい
+- urlのサイトに書かれている内容も必ず踏まえて下さい
+- tcc.0t0.jpから初めて下さい
+例:tcc.0t0.jp/example
+- 分かりやすいurlにしてください
+- 必ず, 考えたurlだけを返して下さい
+- これらのurl以外にしてください[${existingUrls.join(", ")}]`;
   const res = await fetch(endpoint, {
     method: "POST",
     headers: {
