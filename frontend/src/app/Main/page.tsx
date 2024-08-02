@@ -5,6 +5,8 @@ import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import { createUrl } from "@/libs/urls";
 import { createClient } from "@/utils/supabase/client";
 import { suggestUrl } from "@/libs/chatGpt";
+import { IconButton } from "@mui/material";
+import CopyIcon from "@mui/icons-material/ContentCopy";
 
 // TODO: unify field name
 export type ShortenedUrl = {
@@ -76,23 +78,6 @@ export default function Main() {
     }
   };
 
-  const handleRegister = async () => {
-    try {
-      setIsLoading(true);
-      await createUrl(supabase, urls.original, urls.shortened);
-      setIsLoading(false);
-      setCreated(false);
-      setValidationError("");
-      setUrls({
-        original: "",
-        shortened: "",
-      })
-    } catch (error) {
-      console.error(error);
-      setIsLoading(false);
-    }
-  };
-
   const handleReset = () => {
     setUrls({ original: "", shortened: "" });
     setIsSuccess(false);
@@ -102,6 +87,12 @@ export default function Main() {
     setUseCustomUrl(false)
     setCreated(false)
   }
+
+  const handleCopyLink = (url: string) => {
+    navigator.clipboard
+      .writeText(url);
+  };
+
 
   if (useCustomUrl) {
   return (
@@ -144,12 +135,12 @@ export default function Main() {
       </form>
       <div className="flex space-x-4 mt-4 ">
         <button
-                  type="button"
-                  className="text-blue-500 bg-white py-2 px-4 mt-4 rounded-lg"
-                  onClick={handleBack}
-                >
-                  戻る
-                </button>
+          type="button"
+          className="text-blue-500 bg-white py-2 px-4 mt-4 rounded-lg"
+          onClick={handleBack}
+          >
+            戻る
+        </button>
         {!isSuccess ? (
           <button
             type="button"
@@ -213,33 +204,42 @@ export default function Main() {
         <h2 className="text-3xl font-bold">URL短縮</h2>
         <div className="max-w-md">
           <div className="mt-4">
-            <p><strong>短縮元URL</strong> {urls.original}</p>
+            <p><strong>短縮元URL</strong>
+            <br />
+            {urls.original}</p>
           </div>
           <div className="mt-4">
-            <p><strong>短縮URL</strong> {urls.shortened}</p>
+            <p><strong>短縮URL</strong>
+            <br />
+            {urls.shortened}</p>
           </div>
           <div className="flex space-x-4 mt-4">
             <button
+              type="button"
+              className="text-blue-500 bg-white py-2 px-4 mt-4 rounded-lg"
+              onClick={handleBack}
+            >
+              戻る
+            </button>
+            <button
                 type="button"
-                className="text-blue-500 bg-white py-2 px-4 mt-4 rounded-lg"
+                className="text-white bg-blue-500 py-2 px-4 mt-4 rounded-lg"
                 onClick={handleCreateUrl}
               >
                 もう一度生成する
-              </button>
-              <button
-                type="button"
-                className="text-white bg-blue-500 w-32 py-2 px-4 mt-4 rounded-lg"
-                onClick={handleRegister}
-                disabled={isLoading}
-              >
-                {isLoading ? <HourglassEmptyIcon /> : "登録する"}
-              </button>
-              <button
-                type="button"
-                className="text-blue-500 mt-4"
-                onClick={handleCustomMode}
-              >
-              自分で設定する
+            </button>
+            <IconButton
+              aria-label="copy"
+              onClick={() => handleCopyLink(urls.shortened)}
+            >
+              <CopyIcon />
+            </IconButton>
+            <button
+              type="button"
+              className="text-blue-500 mt-4"
+              onClick={handleCustomMode}
+            >
+              変更する
             </button>
           </div>
         </div>
