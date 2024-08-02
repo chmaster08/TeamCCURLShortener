@@ -20,7 +20,6 @@ export default function AppDrawer({ isOpen, toggleDrawer }: DrawerProps) {
   const menuItems = [
     { text: "Main", icon: <HomeIcon />, path: "/Main" },
     { text: "Management", icon: <SettingsIcon />, path: "/Management" },
-    { text: "Analyze", icon: <SettingsIcon />, path: "/Analyze" },
   ];
 
   const handleNavigation = (path: string) => {

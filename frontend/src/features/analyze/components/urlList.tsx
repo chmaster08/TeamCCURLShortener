@@ -25,25 +25,30 @@ export default function URLList(props: URLListProps) {
     props.onSelectionChange(e);
   };
   return (
-    <Box sx={{ width: "100%", maxWidth: 300, bgcolor: "background.papaer" }}>
-      <Paper elevation={3}>
-        <List>
-          {props.urls.map((item) => (
-            <ListItemButton
-              key={item.OriginalURL}
-              selected={selectedItem?.OriginalURL === item.OriginalURL}
-              onClick={() => handleListItemClick(item)}
-            >
-              <Box sx={{ display: "flex", flexDirection: "column" }}>
-                <ListItemText
-                  primary={item.OriginalURL}
-                  secondary={item.ShortenedURL}
-                />
-              </Box>
-            </ListItemButton>
-          ))}
-        </List>
-      </Paper>
+    <Box
+      sx={{
+        width: "100%",
+        maxWidth: 300,
+        overflow: "auto",
+        bgcolor: "background.papaer",
+      }}
+    >
+      <List style={{ overflow: "auto" }}>
+        {props.urls.map((item) => (
+          <ListItemButton
+            key={item.OriginalURL}
+            selected={selectedItem?.OriginalURL === item.OriginalURL}
+            onClick={() => handleListItemClick(item)}
+          >
+            <Box sx={{ display: "flex", flexDirection: "column" }}>
+              <ListItemText
+                primary={item.OriginalURL}
+                secondary={item.ShortenedURL}
+              />
+            </Box>
+          </ListItemButton>
+        ))}
+      </List>
     </Box>
   );
 }
