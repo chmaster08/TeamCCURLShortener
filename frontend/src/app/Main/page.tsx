@@ -50,8 +50,7 @@ export default function Main() {
     try {
       setIsLoading(true);
       // TODO: 被った場合の処理
-      const shortenedUrl = await suggestUrl(urls.original);
-      setExistingUrls([...existingUrls, shortenedUrl]);
+
 
       const gptRes = await suggestUrl(urls.original);
 
@@ -64,8 +63,9 @@ export default function Main() {
       if (shortenedMatch && nameMatch) {
         const shortenedUrl = shortenedMatch[1].trim();
         const name = nameMatch[1].trim();
+        setExistingUrls([...existingUrls, shortenedUrl]);
         setUrls({ ...urls, name: name, shortened: shortenedUrl });
-        await createUrl(supabase, urls.name, urls.original, shortenedUrl);
+        await createUrl(supabase, urls.name, urls.original, urls.shortened);
       setIsLoading(false);
       setCreated(true);
       }
@@ -105,9 +105,9 @@ export default function Main() {
     console.log("handleCreateUrl", urls);
     try {
       setIsLoading(true);
-      const id = await searchUrl(supabase, urls.original);
+      const response = await searchUrl(supabase, urls.original);
+      const id = response[0].id;
       setId(id);
-      console.log("id", id)
       await updateUrl(supabase, id, urls.name, urls.shortened);
       setIsLoading(false);
       setIsSuccess(true);
