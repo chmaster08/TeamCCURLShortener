@@ -51,7 +51,6 @@ export default function Main() {
       setIsLoading(true);
       // TODO: 被った場合の処理
 
-
       const gptRes = await suggestUrl(urls.original);
 
       const shortenedPattern = /shortened:\s*([^,]+)/;
@@ -66,8 +65,8 @@ export default function Main() {
         setExistingUrls([...existingUrls, shortenedUrl]);
         setUrls({ ...urls, name: name, shortened: shortenedUrl });
         await createUrl(supabase, urls.name, urls.original, urls.shortened);
-      setIsLoading(false);
-      setCreated(true);
+        setIsLoading(false);
+        setCreated(true);
       }
     } catch (error) {
       console.error(error);
@@ -83,12 +82,23 @@ export default function Main() {
     try {
       setIsLoading(true);
       // TODO: 被った場合の処理
-      const shortenedUrl = await suggestOtherUrl(urls.original, existingUrls);
-      setExistingUrls([...existingUrls, shortenedUrl]);
-      setUrls({ ...urls, shortened: shortenedUrl });
-      await createUrl(supabase, urls.name, urls.original, shortenedUrl);
-      setIsLoading(false);
-      setCreated(true);
+      const gptRes = await suggestOtherUrl(urls.original, existingUrls);
+
+      const shortenedPattern = /shortened:\s*([^,]+)/;
+      const namePattern = /name:\s*(.+)/;
+
+      const shortenedMatch = gptRes.match(shortenedPattern);
+      const nameMatch = gptRes.match(namePattern);
+
+      if (shortenedMatch && nameMatch) {
+        const shortenedUrl = shortenedMatch[1].trim();
+        const name = nameMatch[1].trim();
+        setExistingUrls([...existingUrls, shortenedUrl]);
+        setUrls({ ...urls, name, shortened: shortenedUrl });
+        await createUrl(supabase, urls.name, urls.original, shortenedUrl);
+        setIsLoading(false);
+        setCreated(true);
+      }
     } catch (error) {
       console.error(error);
       setIsLoading(false);
@@ -111,7 +121,7 @@ export default function Main() {
       await updateUrl(supabase, id, urls.name, urls.shortened);
       setIsLoading(false);
       setIsSuccess(true);
-      setCreated(false)
+      setCreated(false);
     } catch (error) {
       console.error(error);
       setIsLoading(false);
@@ -145,24 +155,20 @@ export default function Main() {
         >
           <div className="mt-8 w-full">
             <div>
-            <strong>
-              名前
-            </strong>
+              <strong>名前</strong>
+            </div>
+            <input
+              className="mt-1 w-full p-2 rounded border border-gray-300"
+              placeholder="Team CCの議事録"
+              value={urls.name}
+              onChange={(e) => {
+                setUrls({ ...urls, name: e.target.value });
+              }}
+            />
           </div>
-          <input
-            className="mt-1 w-full p-2 rounded border border-gray-300"
-            placeholder="Team CCの議事録"
-            value={urls.name}
-            onChange={(e) => {
-              setUrls({ ...urls, name: e.target.value });
-            }}
-          />
-        </div>
-        <div className="mt-8 w-full">
-          <div>
-            <strong>
-              短縮元URL
-            </strong>
+          <div className="mt-8 w-full">
+            <div>
+              <strong>短縮元URL</strong>
             </div>
             <input
               className="mt-1 w-full p-2 rounded border border-gray-300"
@@ -175,18 +181,16 @@ export default function Main() {
           </div>
           <div className="mt-2 w-full">
             <div>
-            <strong>
-              短縮URL
-            </strong>
+              <strong>短縮URL</strong>
             </div>
             <div className="flex items-center">
               <span>tcc.0t0.jp/</span>
               <input
-              className="mt-1 w-full p-2 rounded border border-gray-300"
-              placeholder="https://example.com"
+                className="mt-1 w-full p-2 rounded border border-gray-300"
+                placeholder="https://example.com"
                 value={urls.shortened}
                 onChange={(e) => {
-                setUrls({ ...urls, shortened: e.target.value });
+                  setUrls({ ...urls, shortened: e.target.value });
                 }}
               />
             </div>
@@ -202,13 +206,13 @@ export default function Main() {
           >
             戻る
           </button>
-            <button
-              type="button"
-              className="text-white bg-blue-500 w-32 py-2 px-4 mt-4 rounded-lg"
-              onClick={handleCreateUrlCustom}
-            >
-              {isLoading ? <HourglassEmptyIcon /> : "登録する"}
-            </button>
+          <button
+            type="button"
+            className="text-white bg-blue-500 w-32 py-2 px-4 mt-4 rounded-lg"
+            onClick={handleCreateUrlCustom}
+          >
+            {isLoading ? <HourglassEmptyIcon /> : "登録する"}
+          </button>
         </div>
       </div>
     );
@@ -251,7 +255,7 @@ export default function Main() {
         </button>
       </div>
     );
-  }else  {
+  } else {
     return (
       <div className="max-w-4xl mx-auto mt-8">
         <h2 className="text-3xl font-bold">URL短縮</h2>
@@ -268,7 +272,7 @@ export default function Main() {
               <strong>名前</strong>
               <br />
               {urls.name}
-              </p>
+            </p>
           </div>
           <div className="mt-4">
             <p>
