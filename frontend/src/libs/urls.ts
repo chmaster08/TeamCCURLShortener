@@ -18,14 +18,28 @@ export async function listUrls(
   }));
 }
 
+export async function searchUrl(
+  client: SupabaseClient<any, "public", any>,
+  original: string,
+): Promise<any | null> {
+  const { data: id, error: error } = await client.from("urls").select("id").eq("original", original)
+  if (error) {
+    console.error("error", error);
+    return null;
+  }
+
+  return id;
+}
+
 export async function createUrl(
   client: SupabaseClient<any, "public", any>,
+  name: string,
   original: string,
   shortCode: string,
 ): Promise<Url | null> {
   const { data: url, error } = await client
     .from("urls")
-    .insert([{ original, short_code: shortCode }]);
+    .insert([{ name, original, short_code: shortCode }]);
 
   if (error) {
     console.error("error", error);
@@ -38,12 +52,13 @@ export async function createUrl(
 export async function updateUrl(
   client: SupabaseClient<any, "public", any>,
   id: number,
+  name: string,
   shortCode: string,
 ): Promise<Url | null> {
   console.log(id);
   const { data: url, error } = await client
     .from("urls")
-    .update({ short_code: shortCode })
+    .update({ name, short_code: shortCode })
     .eq("id", id)
     .select()
     .single();

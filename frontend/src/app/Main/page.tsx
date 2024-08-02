@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
-import { createUrl } from "@/libs/urls";
+import { createUrl, searchUrl, updateUrl } from "@/libs/urls";
 import { createClient } from "@/utils/supabase/client";
 import { suggestOtherUrl, suggestUrl } from "@/libs/chatGpt";
 import { IconButton } from "@mui/material";
@@ -10,6 +10,7 @@ import CopyIcon from "@mui/icons-material/ContentCopy";
 
 // TODO: unify field name
 export type ShortenedUrl = {
+  name: string;
   original: string;
   shortened: string;
 };
@@ -17,6 +18,7 @@ export type ShortenedUrl = {
 export default function Main() {
   const supabase = createClient();
   const [urls, setUrls] = useState<ShortenedUrl>({
+    name: "",
     original: "",
     shortened: "",
   });
@@ -30,6 +32,8 @@ export default function Main() {
   const [validationError, setValidationError] = useState("");
 
   const [useCustomUrl, setUseCustomUrl] = useState(false);
+
+  const [id, setId] = useState<number | null>(null);
 
   const [existingUrls, setExistingUrls] = useState<string[]>([]);
 
@@ -48,10 +52,23 @@ export default function Main() {
       // TODO: 被った場合の処理
       const shortenedUrl = await suggestUrl(urls.original);
       setExistingUrls([...existingUrls, shortenedUrl]);
-      setUrls({ ...urls, shortened: shortenedUrl });
-      await createUrl(supabase, urls.original, shortenedUrl);
+
+      const gptRes = await suggestUrl(urls.original);
+
+      const shortenedPattern = /shortened:\s*([^,]+)/;
+      const namePattern = /name:\s*(.+)/;
+
+      const shortenedMatch = gptRes.match(shortenedPattern);
+      const nameMatch = gptRes.match(namePattern);
+
+      if (shortenedMatch && nameMatch) {
+        const shortenedUrl = shortenedMatch[1].trim();
+        const name = nameMatch[1].trim();
+        setUrls({ ...urls, name: name, shortened: shortenedUrl });
+        await createUrl(supabase, urls.name, urls.original, shortenedUrl);
       setIsLoading(false);
       setCreated(true);
+      }
     } catch (error) {
       console.error(error);
       setIsLoading(false);
@@ -69,7 +86,7 @@ export default function Main() {
       const shortenedUrl = await suggestOtherUrl(urls.original, existingUrls);
       setExistingUrls([...existingUrls, shortenedUrl]);
       setUrls({ ...urls, shortened: shortenedUrl });
-      await createUrl(supabase, urls.original, shortenedUrl);
+      await createUrl(supabase, urls.name, urls.original, shortenedUrl);
       setIsLoading(false);
       setCreated(true);
     } catch (error) {
@@ -80,7 +97,7 @@ export default function Main() {
 
   const handleCustomMode = async () => {
     console.log("handleCreateUrl", urls);
-    setUrls({ original: urls.original, shortened: "" });
+    setUrls({ name: "", original: urls.original, shortened: "" });
     setUseCustomUrl(true);
   };
 
@@ -88,9 +105,13 @@ export default function Main() {
     console.log("handleCreateUrl", urls);
     try {
       setIsLoading(true);
-      await createUrl(supabase, urls.original, urls.shortened);
+      const id = await searchUrl(supabase, urls.original);
+      setId(id);
+      console.log("id", id)
+      await updateUrl(supabase, id, urls.name, urls.shortened);
       setIsLoading(false);
       setIsSuccess(true);
+      setCreated(false)
     } catch (error) {
       console.error(error);
       setIsLoading(false);
@@ -98,7 +119,7 @@ export default function Main() {
   };
 
   const handleReset = () => {
-    setUrls({ original: "", shortened: "" });
+    setUrls({ name: "", original: "", shortened: "" });
     setIsSuccess(false);
   };
 
@@ -124,7 +145,24 @@ export default function Main() {
         >
           <div className="mt-8 w-full">
             <div>
-              <strong>短縮元URL</strong>
+            <strong>
+              名前
+            </strong>
+          </div>
+          <input
+            className="mt-1 w-full p-2 rounded border border-gray-300"
+            placeholder="Team CCの議事録"
+            value={urls.name}
+            onChange={(e) => {
+              setUrls({ ...urls, name: e.target.value });
+            }}
+          />
+        </div>
+        <div className="mt-8 w-full">
+          <div>
+            <strong>
+              短縮元URL
+            </strong>
             </div>
             <input
               className="mt-1 w-full p-2 rounded border border-gray-300"
@@ -137,16 +175,18 @@ export default function Main() {
           </div>
           <div className="mt-2 w-full">
             <div>
-              <strong>短縮URL</strong>
+            <strong>
+              短縮URL
+            </strong>
             </div>
             <div className="flex items-center">
               <span>tcc.0t0.jp/</span>
               <input
-                type="text"
-                className="mt-1 ml-1 w-full p-2 rounded border border-gray-300"
+              className="mt-1 w-full p-2 rounded border border-gray-300"
+              placeholder="https://example.com"
                 value={urls.shortened}
                 onChange={(e) => {
-                  setUrls({ ...urls, shortened: e.target.value });
+                setUrls({ ...urls, shortened: e.target.value });
                 }}
               />
             </div>
@@ -162,7 +202,6 @@ export default function Main() {
           >
             戻る
           </button>
-          {!isSuccess ? (
             <button
               type="button"
               className="text-white bg-blue-500 w-32 py-2 px-4 mt-4 rounded-lg"
@@ -170,15 +209,6 @@ export default function Main() {
             >
               {isLoading ? <HourglassEmptyIcon /> : "登録する"}
             </button>
-          ) : (
-            <button
-              type="button"
-              className="text-blue-500 bg-white py-2 px-4 mt-4 rounded-lg"
-              onClick={handleReset}
-            >
-              はじめからやり直す
-            </button>
-          )}
         </div>
       </div>
     );
@@ -221,7 +251,7 @@ export default function Main() {
         </button>
       </div>
     );
-  } else {
+  }else  {
     return (
       <div className="max-w-4xl mx-auto mt-8">
         <h2 className="text-3xl font-bold">URL短縮</h2>
@@ -232,6 +262,13 @@ export default function Main() {
               <br />
               {urls.original}
             </p>
+          </div>
+          <div className="mt-4">
+            <p>
+              <strong>名前</strong>
+              <br />
+              {urls.name}
+              </p>
           </div>
           <div className="mt-4">
             <p>

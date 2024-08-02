@@ -26,8 +26,9 @@ export async function suggestUrl(url: string): Promise<string> {
 - urlのサイトに書かれている内容も必ず踏まえて下さい
 - tcc.0t0.jpから初めて下さい
 例:tcc.0t0.jp/example
-- 分かりやすいurlにしてください
-- 必ず, 考えたurlだけを返して下さい`;
+- 分かりやすいurlと名前にしてください
+- 必ず,考えたurlと名前だけを返してください
+- 必ず,shortened: tcc.0t0.jp/example, name: teamCの議事録の形式で返してください`;
   const res = await fetch(endpoint, {
     method: "POST",
     headers: {
@@ -63,7 +64,8 @@ export async function suggestOtherUrl(
 - tcc.0t0.jpから初めて下さい
 例:tcc.0t0.jp/example
 - 分かりやすいurlにしてください
-- 必ず, 考えたurlだけを返して下さい
+- 必ず,考えたurlと名前だけを返してください
+- 必ず,shortened: tcc.0t0.jp/example, name: teamCの議事録の形式で返してください
 - これらのurl以外にしてください[${existingUrls.join(", ")}]`;
   const res = await fetch(endpoint, {
     method: "POST",
