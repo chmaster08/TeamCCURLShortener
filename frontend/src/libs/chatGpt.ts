@@ -21,14 +21,15 @@ type Response = {
 
 export async function suggestUrl(url: string): Promise<string> {
   const endpoint = "https://api.openai.com/v1/chat/completions";
-  const content = `${url}
+  const content = `以下のurlを開いて、その中の情報を参照してください。
+${url}
 このurlの内容から、短縮urlを考えて下さい
-- urlのサイトに書かれている内容も必ず踏まえて下さい
+- urlの文字列だけでなく, サイトに書かれている内容も必ず踏まえて下さい
 - tcc.0t0.jpから初めて下さい
 例:tcc.0t0.jp/example
 - 分かりやすいurlと名前にしてください
 - 必ず,考えたurlと名前だけを返してください
-- 必ず,shortened: tcc.0t0.jp/example, name: teamCの議事録の形式で返してください`;
+- 必ず,shortened: tcc.0t0.jp/example, name: 例ですの形式で返してください`;
   const res = await fetch(endpoint, {
     method: "POST",
     headers: {
@@ -58,14 +59,15 @@ export async function suggestOtherUrl(
   existingUrls: string[],
 ): Promise<string> {
   const endpoint = "https://api.openai.com/v1/chat/completions";
-  const content = `${url}
+  const content = `以下のurlを開いて、その中の情報を参照してください。
+${url}
 このurlの内容から、短縮urlを考えて下さい
-- urlのサイトに書かれている内容も必ず踏まえて下さい
+- urlの文字列だけでなく, サイトに書かれている内容も必ず踏まえて下さい
 - tcc.0t0.jpから初めて下さい
 例:tcc.0t0.jp/example
 - 分かりやすいurlにしてください
 - 必ず,考えたurlと名前だけを返してください
-- 必ず,shortened: tcc.0t0.jp/example, name: teamCの議事録の形式で返してください
+- 必ず,shortened: tcc.0t0.jp/example, name: 例ですの議事録の形式で返してください
 - これらのurl以外にしてください[${existingUrls.join(", ")}]`;
   const res = await fetch(endpoint, {
     method: "POST",
