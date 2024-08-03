@@ -10,13 +10,25 @@ export async function listUrls(
     return null;
   }
 
-  return urls.map(({ id, name, original, created_at, short_code }) => ({
+  return urls.map(({ id, original, created_at, short_code }) => ({
     id,
-    name,
     original,
     createdAt: created_at,
     shortCode: short_code,
   }));
+}
+
+export async function searchUrl(
+  client: SupabaseClient<any, "public", any>,
+  original: string,
+): Promise<any | null> {
+  const { data: id, error: error } = await client.from("urls").select("id").eq("original", original)
+  if (error) {
+    console.error("error", error);
+    return null;
+  }
+
+  return id;
 }
 
 export async function createUrl(
