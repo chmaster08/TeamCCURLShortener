@@ -7,9 +7,11 @@ import { createClient } from "@/utils/supabase/client";
 import { suggestOtherUrl, suggestUrl } from "@/libs/chatGpt";
 import { IconButton } from "@mui/material";
 import CopyIcon from "@mui/icons-material/ContentCopy";
+import { v4 as uuidv4 } from "uuid";
 
 // TODO: unify field name
 export type ShortenedUrl = {
+  id: string;
   name: string;
   original: string;
   shortened: string;
@@ -18,6 +20,7 @@ export type ShortenedUrl = {
 export default function Main() {
   const supabase = createClient();
   const [urls, setUrls] = useState<ShortenedUrl>({
+    id: uuidv4(),
     name: "",
     original: "",
     shortened: "",
@@ -63,8 +66,8 @@ export default function Main() {
         const shortenedUrl = shortenedMatch[1].trim();
         const name = nameMatch[1].trim();
         setExistingUrls([...existingUrls, shortenedUrl]);
-        setUrls({ ...urls, name: name, shortened: shortenedUrl });
-        await createUrl(supabase, urls.name, urls.original, urls.shortened);
+        setUrls({ ...urls, name, shortened: shortenedUrl });
+        await createUrl(supabase, urls.id, name, urls.original, shortenedUrl);
         setIsLoading(false);
         setCreated(true);
       }
@@ -95,7 +98,7 @@ export default function Main() {
         const name = nameMatch[1].trim();
         setExistingUrls([...existingUrls, shortenedUrl]);
         setUrls({ ...urls, name, shortened: shortenedUrl });
-        await createUrl(supabase, urls.name, urls.original, shortenedUrl);
+        await updateUrl(supabase, urls.id, name, shortenedUrl);
         setIsLoading(false);
         setCreated(true);
       }
@@ -107,7 +110,7 @@ export default function Main() {
 
   const handleCustomMode = async () => {
     console.log("handleCreateUrl", urls);
-    setUrls({ name: "", original: urls.original, shortened: "" });
+    setUrls({ ...urls, name: "", original: urls.original, shortened: "" });
     setUseCustomUrl(true);
   };
 
@@ -129,7 +132,7 @@ export default function Main() {
   };
 
   const handleReset = () => {
-    setUrls({ name: "", original: "", shortened: "" });
+    setUrls({ ...urls, name: "", original: "", shortened: "" });
     setIsSuccess(false);
   };
 

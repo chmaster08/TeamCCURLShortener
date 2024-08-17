@@ -22,7 +22,10 @@ export async function searchUrl(
   client: SupabaseClient<any, "public", any>,
   original: string,
 ): Promise<any | null> {
-  const { data: id, error: error } = await client.from("urls").select("id").eq("original", original)
+  const { data: id, error: error } = await client
+    .from("urls")
+    .select("id")
+    .eq("original", original);
   if (error) {
     console.error("error", error);
     return null;
@@ -33,13 +36,14 @@ export async function searchUrl(
 
 export async function createUrl(
   client: SupabaseClient<any, "public", any>,
+  id: string,
   name: string,
   original: string,
   shortCode: string,
 ): Promise<Url | null> {
   const { data: url, error } = await client
     .from("urls")
-    .insert([{ name, original, short_code: shortCode }]);
+    .insert([{ id, name, original, short_code: shortCode }]);
 
   if (error) {
     console.error("error", error);
@@ -51,7 +55,7 @@ export async function createUrl(
 
 export async function updateUrl(
   client: SupabaseClient<any, "public", any>,
-  id: number,
+  id: string,
   name: string,
   shortCode: string,
 ): Promise<Url | null> {
