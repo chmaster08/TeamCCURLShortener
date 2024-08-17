@@ -15,7 +15,7 @@ interface HeaderProps {
 
 export default function Header({ toggleDrawer }: HeaderProps) {
   const router = useRouter();
-  const { user, signOut, setRedirectPath } = useAuth();
+  const { user, signOut } = useAuth();
   const pathname = usePathname();
 
   const handleNavigate = (path: string) => {
