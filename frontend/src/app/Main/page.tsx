@@ -7,7 +7,7 @@ import { createClient } from "@/utils/supabase/client";
 import { suggestOtherUrl, suggestUrl } from "@/libs/chatGpt";
 import { Checkbox, FormControlLabel, IconButton } from "@mui/material";
 import CopyIcon from "@mui/icons-material/ContentCopy";
-// import { v4 as uuidv4 } from "uuid";
+import { v4 as uuidv4 } from "uuid";
 
 // TODO: unify field name
 export type ShortenedUrl = {
@@ -20,7 +20,7 @@ export type ShortenedUrl = {
 export default function Main() {
   const supabase = createClient();
   const [urls, setUrls] = useState<ShortenedUrl>({
-    // id: uuidv4(),
+    id: uuidv4(),
     name: "",
     original: "",
     shortened: "",
