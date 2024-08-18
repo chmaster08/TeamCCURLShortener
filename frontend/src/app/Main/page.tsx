@@ -40,12 +40,14 @@ export default function Main() {
 
   const [existingUrls, setExistingUrls] = useState<string[]>([]);
 
-  const [autoCopy, setAutoCopy] = useState(true);
+  const [isAutoCopy, setIsAutoCopy] = useState(true);
 
   const validateUrl = (url: string) => {
     const validUrl = new RegExp("https?://[\\w!?/+-_~;.,*&@#$%()\\[\\]]+", "i");
     return validUrl.test(url);
   };
+
+    const domain = "tcc.0t0.jp";
 
   const handleCreateUrl = async () => {
     if (!validateUrl(urls.original)) {
@@ -70,7 +72,7 @@ export default function Main() {
         setExistingUrls([...existingUrls, shortenedUrl]);
         setUrls({ ...urls, name: name, shortened: shortenedUrl });
         await createUrl(supabase, urls.id, name, urls.original, shortenedUrl);
-        if (autoCopy) {
+        if (isAutoCopy) {
           navigator.clipboard.writeText(shortenedUrl);
         }
         setIsLoading(false);
@@ -104,7 +106,6 @@ export default function Main() {
         setExistingUrls([...existingUrls, shortenedUrl]);
         setUrls({ ...urls, name, shortened: shortenedUrl });
         await updateUrl(supabase, urls.id, name, shortenedUrl);
-        await createUrl(supabase, urls.id, urls.name, urls.original, shortenedUrl);
         setIsLoading(false);
         setCreated(true);
       }
@@ -127,7 +128,7 @@ export default function Main() {
       const response = await searchUrl(supabase, urls.original);
       const id = response[0].id;
       setId(id);
-      const shortURL = "tcc.0t0.jp/" + urls.shortened
+      const shortURL = domain + urls.shortened
       await updateUrl(supabase, id, urls.name, shortURL);
       setIsLoading(false);
       setIsSuccess(true);
@@ -256,8 +257,8 @@ export default function Main() {
           <FormControlLabel
             control={
               <Checkbox
-                checked={autoCopy}
-                onChange={(e) => setAutoCopy(e.target.checked)}
+                checked={isAutoCopy}
+                onChange={(e) => setIsAutoCopy(e.target.checked)}
               />
             }
             label="生成した短縮URLを自動でコピーする"
@@ -314,7 +315,7 @@ export default function Main() {
               className="text-white bg-blue-500 py-2 px-4 mt-4 rounded-lg"
               onClick={handleReCreateUrl}
             >
-              {isLoading ? <HourglassEmptyIcon /> : "もう一度生成する"}
+              {isLoading ? <HourglassEmptyIcon /> : "生成し直す"}
             </button>
             <IconButton
               aria-label="copy"
