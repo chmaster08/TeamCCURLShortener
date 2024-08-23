@@ -5,7 +5,7 @@ import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import { createUrl, searchUrl, updateUrl } from "@/libs/urls";
 import { createClient } from "@/utils/supabase/client";
 import { suggestOtherUrl, suggestUrl } from "@/libs/chatGpt";
-import { IconButton } from "@mui/material";
+import { Checkbox, FormControlLabel, IconButton } from "@mui/material";
 import CopyIcon from "@mui/icons-material/ContentCopy";
 import { v4 as uuidv4 } from "uuid";
 
@@ -40,10 +40,14 @@ export default function Main() {
 
   const [existingUrls, setExistingUrls] = useState<string[]>([]);
 
+  const [isAutoCopy, setIsAutoCopy] = useState(true);
+
   const validateUrl = (url: string) => {
     const validUrl = new RegExp("https?://[\\w!?/+-_~;.,*&@#$%()\\[\\]]+", "i");
     return validUrl.test(url);
   };
+
+    const domain = "tcc.0t0.jp";
 
   const handleCreateUrl = async () => {
     if (!validateUrl(urls.original)) {
@@ -56,7 +60,7 @@ export default function Main() {
 
       const gptRes = await suggestUrl(urls.original);
 
-      const shortenedPattern = /shortened:\s*([^,]+)/;
+      const shortenedPattern = /shortened:\s*([^,\s]+)/;
       const namePattern = /name:\s*(.+)/;
 
       const shortenedMatch = gptRes.match(shortenedPattern);
@@ -66,8 +70,11 @@ export default function Main() {
         const shortenedUrl = shortenedMatch[1].trim();
         const name = nameMatch[1].trim();
         setExistingUrls([...existingUrls, shortenedUrl]);
-        setUrls({ ...urls, name, shortened: shortenedUrl });
+        setUrls({ ...urls, name: name, shortened: shortenedUrl });
         await createUrl(supabase, urls.id, name, urls.original, shortenedUrl);
+        if (isAutoCopy) {
+          navigator.clipboard.writeText(shortenedUrl);
+        }
         setIsLoading(false);
         setCreated(true);
       }
@@ -121,7 +128,8 @@ export default function Main() {
       const response = await searchUrl(supabase, urls.original);
       const id = response[0].id;
       setId(id);
-      await updateUrl(supabase, id, urls.name, urls.shortened);
+      const shortURL = domain + urls.shortened
+      await updateUrl(supabase, id, urls.name, shortURL);
       setIsLoading(false);
       setIsSuccess(true);
       setCreated(false);
@@ -190,7 +198,7 @@ export default function Main() {
               <span>tcc.0t0.jp/</span>
               <input
                 className="mt-1 w-full p-2 rounded border border-gray-300"
-                placeholder="https://example.com"
+                placeholder="example"
                 value={urls.shortened}
                 onChange={(e) => {
                   setUrls({ ...urls, shortened: e.target.value });
@@ -214,7 +222,7 @@ export default function Main() {
             className="text-white bg-blue-500 w-32 py-2 px-4 mt-4 rounded-lg"
             onClick={handleCreateUrlCustom}
           >
-            {isLoading ? <HourglassEmptyIcon /> : "登録する"}
+            {isLoading ? <HourglassEmptyIcon /> : "変更する"}
           </button>
         </div>
       </div>
@@ -246,6 +254,16 @@ export default function Main() {
           {validationError !== "" && (
             <div className="text-red-500 mt-2">{validationError}</div>
           )}
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={isAutoCopy}
+                onChange={(e) => setIsAutoCopy(e.target.checked)}
+              />
+            }
+            label="生成した短縮URLを自動でコピーする"
+            className="mt-4"
+          />
           {/* inputが複数のときにEnterキーで送信する用 */}
           <input type="submit" className="hidden" />
         </form>
@@ -297,7 +315,7 @@ export default function Main() {
               className="text-white bg-blue-500 py-2 px-4 mt-4 rounded-lg"
               onClick={handleReCreateUrl}
             >
-              {isLoading ? <HourglassEmptyIcon /> : "もう一度生成する"}
+              {isLoading ? <HourglassEmptyIcon /> : "生成し直す"}
             </button>
             <IconButton
               aria-label="copy"
