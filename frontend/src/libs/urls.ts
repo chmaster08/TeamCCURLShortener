@@ -34,6 +34,22 @@ export async function searchUrl(
   return id;
 }
 
+export async function searchUrlByShortened(
+  client: SupabaseClient<any, "public", any>,
+  shortened: string,
+): Promise<any | null> {
+  const { data: shortCode, error: error } = await client
+    .from("urls")
+    .select("short_code")
+    .eq("short_code", shortened);
+  if (error) {
+    console.error("error", error);
+    return null;
+  }
+
+  return shortCode;
+}
+
 export async function createUrl(
   client: SupabaseClient<any, "public", any>,
   id: string,

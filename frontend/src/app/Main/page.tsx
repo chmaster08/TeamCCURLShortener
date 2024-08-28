@@ -2,7 +2,12 @@
 
 import { useState } from "react";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
-import { createUrl, searchUrl, updateUrl } from "@/libs/urls";
+import {
+  createUrl,
+  searchUrl,
+  searchUrlByShortened,
+  updateUrl,
+} from "@/libs/urls";
 import { createClient } from "@/utils/supabase/client";
 import { suggestOtherUrl, suggestUrl } from "@/libs/chatGpt";
 import { Checkbox, FormControlLabel, IconButton } from "@mui/material";
@@ -47,7 +52,8 @@ export default function Main() {
     return validUrl.test(url);
   };
 
-    const domain = "tcc.0t0.jp";
+  const domain =
+    "https://dponfndzexloucdngbbj.supabase.co/functions/v1/redirect";
 
   const handleCreateUrl = async () => {
     if (!validateUrl(urls.original)) {
@@ -56,7 +62,6 @@ export default function Main() {
     }
     try {
       setIsLoading(true);
-      // TODO: 被った場合の処理
 
       const gptRes = await suggestUrl(urls.original);
 
@@ -67,13 +72,34 @@ export default function Main() {
       const nameMatch = gptRes.match(namePattern);
 
       if (shortenedMatch && nameMatch) {
-        const shortenedUrl = shortenedMatch[1].trim();
-        const name = nameMatch[1].trim();
-        setExistingUrls([...existingUrls, shortenedUrl]);
+        let shortenedUrl = shortenedMatch[1].trim();
+        let name = nameMatch[1].trim();
+
+        const existing: string[] = [];
+
+        while (true) {
+          const shortCodeListInDB = await searchUrlByShortened(
+            supabase,
+            shortenedUrl,
+          );
+          if (shortCodeListInDB.length === 0) {
+            break;
+          }
+          existing.push(shortenedUrl);
+          const otherGptRes = await suggestOtherUrl(urls.original, existing);
+          const otherShortenedMatch = otherGptRes.match(shortenedPattern);
+          const otherNameMatch = otherGptRes.match(namePattern);
+          if (otherShortenedMatch && otherNameMatch) {
+            shortenedUrl = otherShortenedMatch[1].trim();
+            name = otherNameMatch[1].trim();
+          }
+        }
+
+        setExistingUrls([...existingUrls, ...existing]);
         setUrls({ ...urls, name: name, shortened: shortenedUrl });
         await createUrl(supabase, urls.id, name, urls.original, shortenedUrl);
         if (isAutoCopy) {
-          navigator.clipboard.writeText(shortenedUrl);
+          navigator.clipboard.writeText(`${domain}/${shortenedUrl}`);
         }
         setIsLoading(false);
         setCreated(true);
@@ -101,9 +127,30 @@ export default function Main() {
       const nameMatch = gptRes.match(namePattern);
 
       if (shortenedMatch && nameMatch) {
-        const shortenedUrl = shortenedMatch[1].trim();
-        const name = nameMatch[1].trim();
-        setExistingUrls([...existingUrls, shortenedUrl]);
+        let shortenedUrl = shortenedMatch[1].trim();
+        let name = nameMatch[1].trim();
+
+        const existing: string[] = [];
+
+        while (true) {
+          const shortCodeListInDB = await searchUrlByShortened(
+            supabase,
+            shortenedUrl,
+          );
+          if (shortCodeListInDB.length === 0) {
+            break;
+          }
+          existing.push(shortenedUrl);
+          const otherGptRes = await suggestOtherUrl(urls.original, existing);
+          const otherShortenedMatch = otherGptRes.match(shortenedPattern);
+          const otherNameMatch = otherGptRes.match(namePattern);
+          if (otherShortenedMatch && otherNameMatch) {
+            shortenedUrl = otherShortenedMatch[1].trim();
+            name = otherNameMatch[1].trim();
+          }
+        }
+
+        setExistingUrls([...existingUrls, ...existing]);
         setUrls({ ...urls, name, shortened: shortenedUrl });
         await updateUrl(supabase, urls.id, name, shortenedUrl);
         setIsLoading(false);
@@ -128,7 +175,7 @@ export default function Main() {
       const response = await searchUrl(supabase, urls.original);
       const id = response[0].id;
       setId(id);
-      const shortURL = domain + urls.shortened
+      const shortURL = domain + urls.shortened;
       await updateUrl(supabase, id, urls.name, shortURL);
       setIsLoading(false);
       setIsSuccess(true);
@@ -158,7 +205,7 @@ export default function Main() {
       <div className="max-w-4xl mx-auto mt-8">
         <h2 className="text-3xl font-bold">URL短縮</h2>
         <form
-          className="max-w-md"
+          className="max-w-lg"
           onSubmit={async (e) => {
             e.preventDefault();
             await handleCreateUrl();
@@ -194,8 +241,8 @@ export default function Main() {
             <div>
               <strong>短縮URL</strong>
             </div>
-            <div className="flex items-center">
-              <span>tcc.0t0.jp/</span>
+            <div className="flex items-center flex-wrap">
+              <span>{domain}/</span>
               <input
                 className="mt-1 w-full p-2 rounded border border-gray-300"
                 placeholder="example"
@@ -299,7 +346,7 @@ export default function Main() {
             <p>
               <strong>短縮URL</strong>
               <br />
-              {urls.shortened}
+              {`${domain}/${urls.shortened}`}
             </p>
           </div>
           <div className="flex space-x-4 mt-4">
@@ -319,7 +366,7 @@ export default function Main() {
             </button>
             <IconButton
               aria-label="copy"
-              onClick={() => handleCopyLink(urls.shortened)}
+              onClick={() => handleCopyLink(`${domain}/${urls.shortened}`)}
             >
               <CopyIcon />
             </IconButton>
