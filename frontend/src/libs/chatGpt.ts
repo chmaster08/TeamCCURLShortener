@@ -19,8 +19,6 @@ type Response = {
   };
 };
 
-const domain = "https://dponfndzexloucdngbbj.supabase.co/functions/v1/redirect";
-
 export async function suggestUrl(url: string): Promise<string> {
   const endpoint = "https://api.openai.com/v1/chat/completions";
   const content = `以下のurlを開いて、その中の情報を参照してください。
