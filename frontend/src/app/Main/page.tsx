@@ -13,6 +13,7 @@ import { suggestOtherUrl, suggestUrl } from "@/libs/chatGpt";
 import { Checkbox, FormControlLabel, IconButton } from "@mui/material";
 import CopyIcon from "@mui/icons-material/ContentCopy";
 import { v4 as uuidv4 } from "uuid";
+import { env } from "process";
 
 // TODO: unify field name
 export type ShortenedUrl = {
@@ -52,8 +53,7 @@ export default function Main() {
     return validUrl.test(url);
   };
 
-  const domain =
-    "https://dponfndzexloucdngbbj.supabase.co/functions/v1/redirect";
+  const domain = process.env.NEXT_PUBLIC_REDIRECT_DOMAIN;
 
   const handleCreateUrl = async () => {
     if (!validateUrl(urls.original)) {
