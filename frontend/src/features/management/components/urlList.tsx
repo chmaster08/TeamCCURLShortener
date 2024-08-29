@@ -52,7 +52,7 @@ export default function URLCardList(props: URLCardListProps) {
 
   const handleEditSave = () => {
     props.onEditSave({
-      id: editedUrl?.id || 0,
+      id: editedUrl?.id ?? "",
       name: editedName,
       original: editedUrl?.original || "",
       shortCode: editedShortUrl,

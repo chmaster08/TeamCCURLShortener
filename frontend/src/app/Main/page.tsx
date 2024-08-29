@@ -14,22 +14,16 @@ import { Checkbox, FormControlLabel, IconButton } from "@mui/material";
 import CopyIcon from "@mui/icons-material/ContentCopy";
 import { v4 as uuidv4 } from "uuid";
 import { env } from "process";
-
-// TODO: unify field name
-export type ShortenedUrl = {
-  id: string;
-  name: string;
-  original: string;
-  shortened: string;
-};
+import Url from "@/libs/model/url";
 
 export default function Main() {
   const supabase = createClient();
-  const [urls, setUrls] = useState<ShortenedUrl>({
+  const [urls, setUrls] = useState<Url>({
     id: uuidv4(),
     name: "",
     original: "",
-    shortened: "",
+    shortCode: "",
+    createdAt: new Date().toLocaleString(),
   });
 
   const [isSuccess, setIsSuccess] = useState(false);
@@ -65,7 +59,7 @@ export default function Main() {
 
       const gptRes = await suggestUrl(urls.original);
 
-      const shortenedPattern = /shortened:\s*([^,\s]+)/;
+      const shortenedPattern = /shortCode:\s*([^,\s]+)/;
       const namePattern = /name:\s*(.+)/;
 
       const shortenedMatch = gptRes.match(shortenedPattern);
@@ -96,7 +90,7 @@ export default function Main() {
         }
 
         setExistingUrls([...existingUrls, ...existing]);
-        setUrls({ ...urls, name: name, shortened: shortenedUrl });
+        setUrls({ ...urls, name: name, shortCode: shortenedUrl });
         await createUrl(supabase, urls.id, name, urls.original, shortenedUrl);
         if (isAutoCopy) {
           navigator.clipboard.writeText(`${domain}/${shortenedUrl}`);
@@ -120,7 +114,7 @@ export default function Main() {
       // TODO: 被った場合の処理
       const gptRes = await suggestOtherUrl(urls.original, existingUrls);
 
-      const shortenedPattern = /shortened:\s*([^,]+)/;
+      const shortenedPattern = /shortCode:\s*([^,]+)/;
       const namePattern = /name:\s*(.+)/;
 
       const shortenedMatch = gptRes.match(shortenedPattern);
@@ -151,7 +145,7 @@ export default function Main() {
         }
 
         setExistingUrls([...existingUrls, ...existing]);
-        setUrls({ ...urls, name, shortened: shortenedUrl });
+        setUrls({ ...urls, name, shortCode: shortenedUrl });
         await updateUrl(supabase, urls.id, name, shortenedUrl);
         setIsLoading(false);
         setCreated(true);
@@ -164,7 +158,7 @@ export default function Main() {
 
   const handleCustomMode = async () => {
     console.log("handleCreateUrl", urls);
-    setUrls({ ...urls, name: "", original: urls.original, shortened: "" });
+    setUrls({ ...urls, name: "", original: urls.original, shortCode: "" });
     setUseCustomUrl(true);
   };
 
@@ -175,7 +169,7 @@ export default function Main() {
       const response = await searchUrl(supabase, urls.original);
       const id = response[0].id;
       setId(id);
-      const shortURL = domain + urls.shortened;
+      const shortURL = domain + urls.shortCode;
       await updateUrl(supabase, id, urls.name, shortURL);
       setIsLoading(false);
       setIsSuccess(true);
@@ -187,7 +181,7 @@ export default function Main() {
   };
 
   const handleReset = () => {
-    setUrls({ ...urls, name: "", original: "", shortened: "" });
+    setUrls({ ...urls, name: "", original: "", shortCode: "" });
     setIsSuccess(false);
   };
 
@@ -246,9 +240,9 @@ export default function Main() {
               <input
                 className="mt-1 w-full p-2 rounded border border-gray-300"
                 placeholder="example"
-                value={urls.shortened}
+                value={urls.shortCode}
                 onChange={(e) => {
-                  setUrls({ ...urls, shortened: e.target.value });
+                  setUrls({ ...urls, shortCode: e.target.value });
                 }}
               />
             </div>
@@ -346,7 +340,7 @@ export default function Main() {
             <p>
               <strong>短縮URL</strong>
               <br />
-              {`${domain}/${urls.shortened}`}
+              {`${domain}/${urls.shortCode}`}
             </p>
           </div>
           <div className="flex space-x-4 mt-4">
@@ -366,7 +360,7 @@ export default function Main() {
             </button>
             <IconButton
               aria-label="copy"
-              onClick={() => handleCopyLink(`${domain}/${urls.shortened}`)}
+              onClick={() => handleCopyLink(`${domain}/${urls.shortCode}`)}
             >
               <CopyIcon />
             </IconButton>
