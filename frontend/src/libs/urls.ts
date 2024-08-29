@@ -10,8 +10,9 @@ export async function listUrls(
     return null;
   }
 
-  return urls.map(({ id, original, created_at, short_code }) => ({
+  return urls.map(({ id, name, original, created_at, short_code }) => ({
     id,
+    name,
     original,
     createdAt: created_at,
     shortCode: short_code,
@@ -93,7 +94,7 @@ export async function updateUrl(
 
 export async function deleteUrl(
   client: SupabaseClient<any, "public", any>,
-  id: number,
+  id: string,
 ): Promise<boolean> {
   const { error } = await client.from("urls").delete().eq("id", id);
   if (error) {
