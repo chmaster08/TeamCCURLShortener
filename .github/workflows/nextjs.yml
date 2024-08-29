@@ -79,10 +79,11 @@ jobs:
       - name: Build with Next.js
         run: |
           cd frontend
-          ${{ steps.detect-package-manager.outputs.runner }} next build
+          ${{ steps.detect-package-manager.outputs.runner }} npm run build
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{secrets.NEXT_PUBLIC_SUPABASE_URL}}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY}}
+          GITHUB_REPOSITORY: ${{ github.repository }}
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
