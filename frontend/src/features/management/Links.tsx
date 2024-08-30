@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Box } from "@mui/material";
-import { deleteUrl, listUrls, updateUrl } from "@/libs/urls";
+import { deleteUrl, listUrls, listUrlsByUser, updateUrl } from "@/libs/urls";
 import { createClient } from "@/utils/supabase/client";
 import Url from "@/libs/model/url";
 import URLCardList from "./components/urlList";
 import { useAccessData } from "../analyze/hooks/useAccessData";
 import AnalyzePage from "../analyze/pages/analyzepage";
+import { useAuth } from "@/hooks/AuthContext";
 
 export default function Links() {
   const supabase = useMemo(() => createClient(), []);
@@ -15,6 +16,7 @@ export default function Links() {
   const [linksData, setLinksData] = useState<Url[]>([]);
   const [selectedUrl, setSelectedUrl] = useState<Url | null>(null);
   const { accessData } = useAccessData(selectedUrl);
+  const {user} = useAuth();
 
   const handleSelectedUrl = (url: Url | null) => {
     setSelectedUrl(url);
@@ -41,12 +43,12 @@ export default function Links() {
   };
 
   const retrieveData = useCallback(async () => {
-    const data = await listUrls(supabase);
+    const data = await listUrlsByUser(supabase, user?.email ?? "");
     if (data) {
       setLinksData(data);
       setSelectedUrl(null);
     }
-  }, [supabase]);
+  }, [supabase, user]);
 
   useEffect(() => {
     retrieveData();

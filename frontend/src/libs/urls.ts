@@ -10,12 +10,36 @@ export async function listUrls(
     return null;
   }
 
-  return urls.map(({ id, name, original, created_at, short_code }) => ({
+  return urls.map(({ id, name, original, created_at, short_code, createdby }) => ({
     id,
     name,
     original,
     createdAt: created_at,
     shortCode: short_code,
+    createdby,
+  }));
+}
+
+export async function listUrlsByUser(
+  client: SupabaseClient<any, "public", any>,
+  createdby: string,
+): Promise<Url[] | null> {
+  const { data: urls, error: error } = await client
+    .from("urls")
+    .select("*")
+    .eq("createdby", createdby);
+  if (error) {
+    console.error("error", error);
+    return null;
+  }
+
+  return urls.map(({ id, name, original, created_at, short_code, createdby }) => ({
+    id,
+    name,
+    original,
+    createdAt: created_at,
+    shortCode: short_code,
+    createdby,
   }));
 }
 
@@ -57,10 +81,11 @@ export async function createUrl(
   name: string,
   original: string,
   shortCode: string,
+  createdby:string,
 ): Promise<Url | null> {
   const { data: url, error } = await client
     .from("urls")
-    .insert([{ id, name, original, short_code: shortCode }]);
+    .insert([{ id, name, original, short_code: shortCode, createdby }]);
 
   if (error) {
     console.error("error", error);
@@ -89,7 +114,7 @@ export async function updateUrl(
     return null;
   }
 
-  return { ...url, shortCode: url.short_code, createdAt: url.created_at };
+  return { ...url, shortCode: url.short_code, createdAt: url.created_at, createdby: url.createdby };
 }
 
 export async function deleteUrl(
