@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
+import CheckIcon from "@mui/icons-material/Check";
 import {
   createUrl,
   searchUrl,
@@ -47,11 +48,20 @@ export default function Main() {
   const [existingUrls, setExistingUrls] = useState<string[]>([]);
 
   const [isAutoCopy, setIsAutoCopy] = useState(true);
+  const [isCopied, setIsCopied] = useState(false);
 
   const validateUrl = (url: string) => {
     const validUrl = new RegExp("https?://[\\w!?/+-_~;.,*&@#$%()\\[\\]]+", "i");
     return validUrl.test(url);
   };
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [useCustomUrl, created]);
 
   const domain = process.env.NEXT_PUBLIC_REDIRECT_DOMAIN;
 
@@ -110,11 +120,18 @@ export default function Main() {
     }
   };
 
-  const handleReCreateUrl = async () => {
-    if (!validateUrl(urls.original)) {
-      setValidationError("URLが有効ではありません");
-      return;
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    if (name === "original") {
+      if (!validateUrl(value)) {
+        setValidationError("URLが有効ではありません");
+      } else {
+        setValidationError("");
+      }
     }
+  };
+
+  const handleReCreateUrl = async () => {
     try {
       setIsLoading(true);
       // TODO: 被った場合の処理
@@ -164,22 +181,29 @@ export default function Main() {
 
   const handleCustomMode = async () => {
     console.log("handleCreateUrl", urls);
-    setUrls({ ...urls, name: "", original: urls.original, shortened: "" });
     setUseCustomUrl(true);
   };
 
   const handleCreateUrlCustom = async () => {
     console.log("handleCreateUrl", urls);
     try {
+      if(!urls.name || !urls.shortened){
+        setValidationError("名前と短縮URLの両方を入力してください");
+        return;
+      }
       setIsLoading(true);
       const response = await searchUrl(supabase, urls.original);
       const id = response[0].id;
       setId(id);
       const shortURL = domain + urls.shortened;
       await updateUrl(supabase, id, urls.name, shortURL);
+      if (isAutoCopy) {
+        navigator.clipboard.writeText(`${domain}/${shortURL}`);
+      }
       setIsLoading(false);
       setIsSuccess(true);
-      setCreated(false);
+      setValidationError("");
+      setUseCustomUrl(false);
     } catch (error) {
       console.error(error);
       setIsLoading(false);
@@ -189,15 +213,20 @@ export default function Main() {
   const handleReset = () => {
     setUrls({ ...urls, name: "", original: "", shortened: "" });
     setIsSuccess(false);
-  };
-
-  const handleBack = () => {
+    setIsAutoCopy(true);
     setUseCustomUrl(false);
     setCreated(false);
   };
 
+  const handleBack = () => {
+    setUseCustomUrl(false);
+  };
+
+
   const handleCopyLink = (url: string) => {
     navigator.clipboard.writeText(url);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 3000);
   };
 
   if (useCustomUrl) {
@@ -216,6 +245,7 @@ export default function Main() {
               <strong>名前</strong>
             </div>
             <input
+              ref={inputRef}
               className="mt-1 w-full p-2 rounded border border-gray-300"
               placeholder="Team CCの議事録"
               value={urls.name}
@@ -235,6 +265,7 @@ export default function Main() {
               onChange={(e) => {
                 setUrls({ ...urls, original: e.target.value });
               }}
+              readOnly
             />
           </div>
           <div className="mt-2 w-full">
@@ -253,20 +284,40 @@ export default function Main() {
               />
             </div>
           </div>
+          {validationError !== "" && (
+            <div className="text-red-500 mt-2">{validationError}</div>
+          )}
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={isAutoCopy}
+                onChange={(e) => setIsAutoCopy(e.target.checked)}
+              />
+            }
+            label="生成した短縮URLを自動でコピーする"
+            className="mt-4"
+          />
           {/* inputが複数のときにEnterキーで送信する用 */}
           <input type="submit" className="hidden" />
         </form>
         <div className="flex space-x-4 mt-4 ">
           <button
             type="button"
-            className="text-blue-500 bg-white py-2 px-4 mt-4 rounded-lg"
+            className="text-blue-500 bg-white py-2 px-4 mt-4 rounded-lg hover:opacity-75"
+            onClick={handleReset}
+          >
+            最初からやりなおす
+          </button>
+          <button
+            type="button"
+            className="text-blue-500 bg-white py-2 px-4 mt-4 rounded-lg hover:opacity-75"
             onClick={handleBack}
           >
             戻る
           </button>
           <button
             type="button"
-            className="text-white bg-blue-500 w-32 py-2 px-4 mt-4 rounded-lg"
+            className="text-white bg-blue-500 w-32 py-2 px-4 mt-4 rounded-lg hover:opacity-75"
             onClick={handleCreateUrlCustom}
           >
             {isLoading ? <HourglassEmptyIcon /> : "変更する"}
@@ -290,12 +341,15 @@ export default function Main() {
           <div className="mt-8 w-full">
             <div>短縮元URL</div>
             <input
+              ref={inputRef}
+              name="original"
               className="mt-1 w-full p-2 rounded border border-gray-300"
               placeholder="https://example.com"
               value={urls.original}
               onChange={(e) => {
                 setUrls({ ...urls, original: e.target.value });
               }}
+              onBlur={handleBlur}
             />
           </div>
           {validationError !== "" && (
@@ -316,7 +370,7 @@ export default function Main() {
         </form>
         <button
           type="button"
-          className="text-white bg-blue-500 w-32 py-2 px-4 mt-4 rounded-lg"
+          className="text-white bg-blue-500 w-32 py-2 px-4 mt-4 rounded-lg hover:opacity-75"
           onClick={handleCreateUrl}
         >
           {isLoading ? <HourglassEmptyIcon /> : "生成する"}
@@ -352,27 +406,39 @@ export default function Main() {
           <div className="flex space-x-4 mt-4">
             <button
               type="button"
-              className="text-blue-500 bg-white py-2 px-4 mt-4 rounded-lg"
-              onClick={handleBack}
+              className="text-blue-500 bg-white py-2 px-4 mt-4 rounded-lg hover:opacity-75"
+              onClick={handleReset}
             >
-              戻る
+              最初からやり直す
             </button>
             <button
               type="button"
-              className="text-white bg-blue-500 py-2 px-4 mt-4 rounded-lg"
+              className="text-white bg-blue-500 py-2 px-4 mt-4 rounded-lg hover:opacity-75"
               onClick={handleReCreateUrl}
             >
               {isLoading ? <HourglassEmptyIcon /> : "生成し直す"}
             </button>
             <IconButton
               aria-label="copy"
+              sx={{
+                width: "40px",
+                height: "40px",
+                marginTop: "20px",
+                backgroundColor: "transparent",
+                borderRadius: "50%",
+                transition: "background-color 0.3s, opacity 0.3s",
+                "&:hover": {
+                  backgroundColor: "rgba(0, 0, 0, 0.1)",
+                  opacity: 0.7,
+                },
+              }}
               onClick={() => handleCopyLink(`${domain}/${urls.shortened}`)}
             >
-              <CopyIcon />
+              {isCopied ? <CheckIcon color="success" /> : <CopyIcon />}
             </IconButton>
             <button
               type="button"
-              className="text-blue-500 mt-4"
+              className="text-blue-500 mt-4 hover:opacity-75"
               onClick={handleCustomMode}
             >
               変更する
