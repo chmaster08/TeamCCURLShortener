@@ -1,5 +1,6 @@
 export default interface Url {
-  id: number;
+  id: string;
+  name: string;
   original: string;
   shortCode: string;
   createdAt: string;
