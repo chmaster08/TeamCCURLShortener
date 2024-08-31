@@ -17,14 +17,6 @@ import { v4 as uuidv4 } from "uuid";
 import { env } from "process";
 import Url from "@/libs/model/url";
 
-// TODO: unify field name
-export type ShortenedUrl = {
-  id: string;
-  name: string;
-  original: string;
-  shortened: string;
-};
-
 export default function Main() {
   const supabase = createClient();
   const [urls, setUrls] = useState<Url>({
