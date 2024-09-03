@@ -28,7 +28,7 @@ export default function Main() {
     createdby: "",
   });
 
-  const {user} = useAuth();
+  const { user } = useAuth();
   const [isSuccess, setIsSuccess] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
@@ -52,6 +52,7 @@ export default function Main() {
     original: "",
     shortCode: "",
     createdAt: "",
+    createdby: "",
   });
 
   const validateUrl = (url: string) => {
@@ -111,7 +112,14 @@ export default function Main() {
 
         setExistingUrls([...existingUrls, ...existing]);
         setUrls({ ...urls, name: name, shortCode: shortenedUrl });
-        await createUrl(supabase, urls.id, name, urls.original, shortenedUrl, user?.email || "");
+        await createUrl(
+          supabase,
+          urls.id,
+          name,
+          urls.original,
+          shortenedUrl,
+          user?.email || "",
+        );
         if (isAutoCopy) {
           navigator.clipboard.writeText(`${domain}/${shortenedUrl}`);
         }
@@ -215,6 +223,7 @@ export default function Main() {
       shortCode: "",
       createdAt: new Date().toLocaleString(),
       id: uuidv4(),
+      createdby: "",
     });
     setIsSuccess(false);
     setIsAutoCopy(true);
