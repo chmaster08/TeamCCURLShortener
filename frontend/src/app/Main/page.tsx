@@ -14,7 +14,6 @@ import { suggestOtherUrl, suggestUrl } from "@/libs/chatGpt";
 import { Checkbox, FormControlLabel, IconButton } from "@mui/material";
 import CopyIcon from "@mui/icons-material/ContentCopy";
 import { v4 as uuidv4 } from "uuid";
-import { env } from "process";
 import Url from "@/libs/model/url";
 
 export default function Main() {
@@ -37,12 +36,20 @@ export default function Main() {
 
   const [useCustomUrl, setUseCustomUrl] = useState(false);
 
-  const [id, setId] = useState<number | null>(null);
-
   const [existingUrls, setExistingUrls] = useState<string[]>([]);
 
   const [isAutoCopy, setIsAutoCopy] = useState(true);
   const [isCopied, setIsCopied] = useState(false);
+
+  const [isValidationOn, setIsValidationOn] = useState(false);
+
+  const [beforeUrls, setBeforeUrls] = useState<Url>({
+    id: "",
+    name: "",
+    original: "",
+    shortCode: "",
+    createdAt: "",
+  });
 
   const validateUrl = (url: string) => {
     const validUrl = new RegExp("https?://[\\w!?/+-_~;.,*&@#$%()\\[\\]]+", "i");
@@ -69,7 +76,7 @@ export default function Main() {
 
       const gptRes = await suggestUrl(urls.original);
 
-      const shortenedPattern = /shortCode:\s*([^,\s]+)/;
+      const shortenedPattern = /shortened:\s*([^,\s]+)/;
       const namePattern = /name:\s*(.+)/;
 
       const shortenedMatch = gptRes.match(shortenedPattern);
@@ -114,7 +121,7 @@ export default function Main() {
     }
   };
 
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+  const handleValidation = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     if (name === "original") {
       if (!validateUrl(value)) {
@@ -128,10 +135,9 @@ export default function Main() {
   const handleReCreateUrl = async () => {
     try {
       setIsLoading(true);
-      // TODO: 被った場合の処理
       const gptRes = await suggestOtherUrl(urls.original, existingUrls);
 
-      const shortenedPattern = /shortCode:\s*([^,]+)/;
+      const shortenedPattern = /shortened:\s*([^,]+)/;
       const namePattern = /name:\s*(.+)/;
 
       const shortenedMatch = gptRes.match(shortenedPattern);
@@ -174,25 +180,20 @@ export default function Main() {
   };
 
   const handleCustomMode = async () => {
-    console.log("handleCreateUrl", urls);
     setUseCustomUrl(true);
+    setBeforeUrls({ ...urls });
   };
 
   const handleCreateUrlCustom = async () => {
-    console.log("handleCreateUrl", urls);
     try {
-      if(!urls.name || !urls.shortCode){
+      if (!urls.name || !urls.shortCode) {
         setValidationError("名前と短縮URLの両方を入力してください");
         return;
       }
       setIsLoading(true);
-      const response = await searchUrl(supabase, urls.original);
-      const id = response[0].id;
-      setId(id);
-      const shortURL = domain + urls.shortCode;
-      await updateUrl(supabase, id, urls.name, shortURL);
+      await updateUrl(supabase, urls.id, urls.name, urls.shortCode);
       if (isAutoCopy) {
-        navigator.clipboard.writeText(`${domain}/${shortURL}`);
+        navigator.clipboard.writeText(`${domain}/${urls.shortCode}`);
       }
       setIsLoading(false);
       setIsSuccess(true);
@@ -205,17 +206,26 @@ export default function Main() {
   };
 
   const handleReset = () => {
-    setUrls({ ...urls, name: "", original: "", shortCode: "" });
+    setUrls({
+      name: "",
+      original: "",
+      shortCode: "",
+      createdAt: new Date().toLocaleString(),
+      id: uuidv4(),
+    });
     setIsSuccess(false);
     setIsAutoCopy(true);
     setUseCustomUrl(false);
     setCreated(false);
+    setValidationError("");
+    setValidationError("");
+    setExistingUrls([]);
   };
 
   const handleBack = () => {
     setUseCustomUrl(false);
+    setUrls({ ...beforeUrls });
   };
-
 
   const handleCopyLink = (url: string) => {
     navigator.clipboard.writeText(url);
@@ -231,7 +241,7 @@ export default function Main() {
           className="max-w-lg"
           onSubmit={async (e) => {
             e.preventDefault();
-            await handleCreateUrl();
+            await handleCreateUrlCustom();
           }}
         >
           <div className="mt-8 w-full">
@@ -241,7 +251,7 @@ export default function Main() {
             <input
               ref={inputRef}
               className="mt-1 w-full p-2 rounded border border-gray-300"
-              placeholder="Team CCの議事録"
+              placeholder="名前"
               value={urls.name}
               onChange={(e) => {
                 setUrls({ ...urls, name: e.target.value });
@@ -253,13 +263,13 @@ export default function Main() {
               <strong>短縮元URL</strong>
             </div>
             <input
-              className="mt-1 w-full p-2 rounded border border-gray-300"
+              className="mt-1 w-full p-2 rounded border border-gray-300 bg-white"
               placeholder="https://example.com"
               value={urls.original}
               onChange={(e) => {
                 setUrls({ ...urls, original: e.target.value });
               }}
-              readOnly
+              disabled
             />
           </div>
           <div className="mt-2 w-full">
@@ -331,7 +341,6 @@ export default function Main() {
             await handleCreateUrl();
           }}
         >
-          {/* TODO: Handle empty string */}
           <div className="mt-8 w-full">
             <div>短縮元URL</div>
             <input
@@ -342,8 +351,13 @@ export default function Main() {
               value={urls.original}
               onChange={(e) => {
                 setUrls({ ...urls, original: e.target.value });
+                if (isValidationOn) {
+                  handleValidation(e);
+                }
               }}
-              onBlur={handleBlur}
+              onBlur={() => {
+                setIsValidationOn(true);
+              }}
             />
           </div>
           {validationError !== "" && (
