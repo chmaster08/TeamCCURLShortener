@@ -85,6 +85,7 @@ jobs:
           NEXT_PUBLIC_CHAT_GPT_API_KEY: ${{secrets.NEXT_PUBLIC_CHAT_GPT_API_KEY}}
           NEXT_PUBLIC_SUPABASE_URL: ${{secrets.NEXT_PUBLIC_SUPABASE_URL}}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY}}
+          NEXT_PUBLIC_REDIRECT_DOMAIN: ${{secrets.NEXT_PUBLIC_REDIRECT_DOMAIN}}
           GITHUB_REPOSITORY: ${{ github.repository }}
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
