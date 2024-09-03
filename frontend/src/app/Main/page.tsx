@@ -15,6 +15,7 @@ import { Checkbox, FormControlLabel, IconButton } from "@mui/material";
 import CopyIcon from "@mui/icons-material/ContentCopy";
 import { v4 as uuidv4 } from "uuid";
 import Url from "@/libs/model/url";
+import { useAuth } from "@/hooks/AuthContext";
 
 export default function Main() {
   const supabase = createClient();
@@ -24,8 +25,10 @@ export default function Main() {
     original: "",
     shortCode: "",
     createdAt: new Date().toLocaleString(),
+    createdby: "",
   });
 
+  const {user} = useAuth();
   const [isSuccess, setIsSuccess] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
@@ -108,7 +111,7 @@ export default function Main() {
 
         setExistingUrls([...existingUrls, ...existing]);
         setUrls({ ...urls, name: name, shortCode: shortenedUrl });
-        await createUrl(supabase, urls.id, name, urls.original, shortenedUrl);
+        await createUrl(supabase, urls.id, name, urls.original, shortenedUrl, user?.email || "");
         if (isAutoCopy) {
           navigator.clipboard.writeText(`${domain}/${shortenedUrl}`);
         }

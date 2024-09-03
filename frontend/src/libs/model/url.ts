@@ -4,4 +4,5 @@ export default interface Url {
   original: string;
   shortCode: string;
   createdAt: string;
+  createdby: string;
 }
