@@ -57,6 +57,7 @@ export default function URLCardList(props: URLCardListProps) {
       original: editedUrl?.original || "",
       shortCode: editedShortUrl,
       createdAt: editedUrl?.createdAt || "",
+      createdby: editedUrl?.createdby || "",
     });
     handleEditDialogClose();
   };
@@ -73,8 +74,7 @@ export default function URLCardList(props: URLCardListProps) {
   };
 
   const handleDeleteDialogClose = () => {
-    setDeletedAlertOpen(true);
-    setTimeout(() => setDeletedAlertOpen(false), 1500);
+    setOpenDeleteDialog(false);
   };
 
   const handleCopyLink = (url: Url) => {
