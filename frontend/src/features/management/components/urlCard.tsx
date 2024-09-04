@@ -49,12 +49,12 @@ export default function URLCard(props: URLCardProps) {
             >
               <Delete />
             </IconButton>
-            <IconButton
+            {/* <IconButton
               aria-label="qr code"
               onClick={() => props.onQrCode(props.urlItem)}
             >
               <QrCode />
-            </IconButton>
+            </IconButton> */}
           </Box>
         }
       />
