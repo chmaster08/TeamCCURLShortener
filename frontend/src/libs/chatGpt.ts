@@ -27,7 +27,7 @@ ${url}
 - urlの文字列だけでなく, サイトに書かれている内容も必ず踏まえて下さい
 - 分かりやすいurlと名前にしてください
 - 必ず,考えたurlと名前だけを返してください
-- 必ず,shortened: example, name: 例ですの形式で返してください`;
+- 必ず,"shortened: example, name: 例です"の形式で返してください`;
   const res = await fetch(endpoint, {
     method: "POST",
     headers: {
@@ -63,7 +63,7 @@ ${url}
 - urlの文字列だけでなく, サイトに書かれている内容も必ず踏まえて下さい
 - 分かりやすいurlにしてください
 - 必ず,考えたurlと名前だけを返してください
-- 必ず,shortened: example, name: 例ですの議事録の形式で返してください
+- 必ず,"shortened: example, name: 例です"の形式で返してください
 - これらのurl以外にしてください[${existingUrls.join(", ")}]`;
   const res = await fetch(endpoint, {
     method: "POST",
